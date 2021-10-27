@@ -1,0 +1,42 @@
+QIIME2 for fungi
+time qiime tools import \
+  --type 'SampleData[PairedEndSequencesWithQuality]' \
+  --input-path pe-64-manifest \
+  --output-path paired-end-demux.qza \
+--input-format PairedEndFastqManifestPhred33V2
+
+time qiime demux summarize \
+--i-data paired-end-demux.qza \
+--o-visualization demux.qzv
+
+time qiime dada2 denoise-paired \
+--i-demultiplexed-seqs paired-end-demux.qza \
+--p-trunc-len-f 0 \
+--p-trunc-len-r 0 \
+--o-table table.qza \
+--o-representative-sequences rep-seqs.qza \
+--o-denoising-stats denoising-stats.qza
+
+qiime feature-table summarize \
+  --i-table table.qza \
+  --o-visualization table.qzv
+
+qiime feature-table tabulate-seqs \
+  --i-data rep-seqs.qza \
+  --o-visualization rep-seqs.qzv
+
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences rep-seqs.qza \
+  --o-alignment aligned-rep-seqs.qza \
+  --o-masked-alignment masked-aligned-rep-seqs.qza \
+  --o-tree unrooted-tree.qza \
+  --o-rooted-tree rooted-tree.qza
+
+qiime diversity core-metrics-phylogenetic \
+  --i-phylogeny rooted-tree.qza \
+  --i-table table.qza \
+  --p-sampling-depth 4000 \
+  --m-metadata-file sample-metadata.tsv \
+  --output-dir core-metrics-results
+
+Taxonomy was assigned to ASVs using against Warcup Database (rdp.cme.msu.edu/classifier/detail.jsp?root=1&depth=10&confidence=0.8&cncorrected=no) for fungi.
